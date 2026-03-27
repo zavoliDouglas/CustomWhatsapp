@@ -7,7 +7,23 @@ const path    = require('path');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ─── CORS — obrigatório para o SFMC carregar a custom activity ───────────────
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 app.use(express.json());
+
+// Rota explícita para o config.json (SFMC busca na raiz)
+app.get('/config.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.join(__dirname, 'public', 'config.json'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Monta o payload exato que o Mulesoft vai disparar para o BLIP ───────────
