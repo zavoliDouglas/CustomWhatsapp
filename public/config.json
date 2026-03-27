@@ -30,7 +30,7 @@
     }
   },
   "configurationArguments": {
-    "applicationExtensionKey": "2ab4beac-d99e-41ae-a2ce-380d9be2012f",
+    "applicationExtensionKey": "d8e9fa42-5441-469f-8903-dc93ff1e9187",
     "save": {
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/save",
       "verb": "POST",
