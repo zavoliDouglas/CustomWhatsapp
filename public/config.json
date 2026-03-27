@@ -19,7 +19,20 @@
   ],
   "arguments": {
     "execute": {
-      "inArguments": [],
+      "inArguments": [
+        { "messageTemplate": "" },
+        { "recipient": "" },
+        { "installationNumber": "" },
+        { "userState": "" },
+        { "processedDocument": "" },
+        { "serviceChoosed": "" },
+        { "name": "" },
+        { "recipient_field": "" },
+        { "eventDefinitionKey": "" },
+        { "journeyName": "" },
+        { "journeyVersion": "" },
+        { "createdDate": "" }
+      ],
       "outArguments": [],
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/execute",
       "useJwt": true,
@@ -74,6 +87,41 @@
             "recipient": {
               "dataType": "Phone",
               "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "installationNumber": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "userState": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "processedDocument": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "serviceChoosed": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "name": {
+              "dataType": "Text",
+              "isNullable": true,
               "direction": "in"
             }
           }
