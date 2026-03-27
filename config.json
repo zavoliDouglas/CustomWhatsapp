@@ -1,0 +1,92 @@
+{
+  "workflowApiVersion": "1.1",
+  "metaData": {
+    "icon": "icon.png",
+    "iconSmall": "icon.png",
+    "category": "message"
+  },
+  "type": "REST",
+  "lang": {
+    "en-US": {
+      "name": "WhatsApp via BLIP",
+      "description": "Envio de mensagem WhatsApp via BLIP"
+    }
+  },
+  "filterExpressionEnabled": false,
+  "wizardSteps": [
+    { "key": "step1", "label": "Template" },
+    { "key": "step2", "label": "Parâmetros" }
+  ],
+  "arguments": {
+    "execute": {
+      "inArguments": [],
+      "outArguments": [],
+      "url": "https://SEU-APP.herokuapp.com/execute",
+      "useJwt": true,
+      "timeout": 10000,
+      "retryCount": 2,
+      "retryDelay": 1000,
+      "concurrentRequests": 5
+    }
+  },
+  "configurationArguments": {
+    "applicationExtensionKey": "SUA-EXTENSION-KEY-AQUI",
+    "save": {
+      "url": "https://SEU-APP.herokuapp.com/save",
+      "verb": "POST",
+      "useJwt": true
+    },
+    "publish": {
+      "url": "https://SEU-APP.herokuapp.com/publish",
+      "verb": "POST",
+      "useJwt": true
+    },
+    "validate": {
+      "url": "https://SEU-APP.herokuapp.com/validate",
+      "verb": "POST",
+      "useJwt": true
+    },
+    "stop": {
+      "url": "https://SEU-APP.herokuapp.com/stop",
+      "verb": "POST",
+      "useJwt": true
+    }
+  },
+  "userInterfaces": {
+    "configModal": {
+      "height": 620,
+      "width": 800,
+      "fullscreen": false
+    }
+  },
+  "schema": {
+    "arguments": {
+      "execute": {
+        "inArguments": [
+          {
+            "messageTemplate": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "recipient": {
+              "dataType": "Phone",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "messageParams": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          }
+        ],
+        "outArguments": []
+      }
+    }
+  }
+}
