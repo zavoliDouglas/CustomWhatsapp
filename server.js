@@ -86,12 +86,24 @@ app.post('/publish', (req, res) => {
 
 // Validação antes de publicar
 app.post('/validate', (req, res) => {
-  console.log('\n[VALIDATE] Payload recebido do JB:');
+  console.log('\n[VALIDATE] Body completo recebido do JB:');
   console.log(JSON.stringify(req.body, null, 2));
 
-  const inArgs = req.body?.inArguments?.[0] || {};
-  const errors = [];
+  // O JB pode enviar inArguments em diferentes níveis dependendo da versão
+  const inArgs =
+    req.body?.inArguments?.[0] ||           // formato padrão
+    req.body?.arguments?.execute?.inArguments?.[0] || // formato aninhado
+    {};
 
+  console.log('[VALIDATE] inArgs extraídos:', JSON.stringify(inArgs));
+
+  // Se o body vier vazio (activity ainda não configurada), deixa passar
+  // O JB só valida de verdade quando a activity está isConfigured=true
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(200).json({ status: 'ok' });
+  }
+
+  const errors = [];
   if (!inArgs.messageTemplate) errors.push('messageTemplate é obrigatório');
   if (!inArgs.recipient)       errors.push('recipient (telefone) é obrigatório');
 
