@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>WhatsApp via BLIP</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="main.css"/>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="require.js"></script>
+
+  <script>
+    (function () {
+      require({ baseUrl: '' }, ['customActivity']);
+    })();
+  </script>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div class="header-bar px-4 py-3 d-flex align-items-center justify-content-between">
+    <span class="fw-semibold" style="font-size:15px;">WhatsApp via BLIP</span>
+    <span id="stepIndicator" class="step-badge">Passo 1 de 2</span>
+  </div>
+
+  <!-- Body -->
+  <div class="main-body px-4 py-4">
+
+    <!-- ── STEP 1: template + telefone ──────────────────────────────────── -->
+    <div id="step1">
+      <p class="section-title">Configuração do Template</p>
+
+      <div class="field-group">
+        <label for="selectTemplate" class="field-label">Template WhatsApp</label>
+        <select id="selectTemplate" class="form-select form-select-sm">
+          <option value="">— selecione —</option>
+        </select>
+        <div id="alertTemplate" class="field-alert" style="display:none;">
+          Selecione um template para continuar.
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="selectRecipient" class="field-label">Campo de Telefone <span class="field-hint">(recipient)</span></label>
+        <select id="selectRecipient" class="form-select form-select-sm">
+          <option value="">— selecione —</option>
+        </select>
+        <small class="text-muted d-block mt-1" style="font-size:12px;">
+          Campo da Data Extension que será usado como número de destino.
+        </small>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: mapeamento de parâmetros ─────────────────────────────── -->
+    <div id="step2" style="display:none;">
+      <p class="section-title">Mapeamento de Parâmetros</p>
+      <p class="section-subtitle">
+        Associe cada parâmetro do template BLIP a um campo da sua Data Extension.
+      </p>
+
+      <div id="paramsContainer"></div>
+
+      <div id="alertParams" class="field-alert" style="display:none;">
+        Preencha todos os parâmetros para continuar.
+      </div>
+    </div>
+
+  </div><!-- /main-body -->
+
+</body>
+</html>
