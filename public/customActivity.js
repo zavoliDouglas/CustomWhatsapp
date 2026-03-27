@@ -251,14 +251,14 @@ define(['postmonger'], function (Postmonger) {
 
     // Guarda campos no payload["arguments"] direto — usado pelo JB para
     // recarregar o wizard quando a activity já foi configurada
-    payload['arguments']               = payload['arguments'] || {};
-    payload['arguments'].messageTemplate = messageTemplate;
-    payload['arguments'].recipient_field = recipientField;
+    payload["arguments"]               = payload["arguments"] || {};
+    payload["arguments"].messageTemplate = messageTemplate;
+    payload["arguments"].recipient_field = recipientField;
 
     // inArguments: objeto único dentro do array (padrão JB)
     if (recipientToken) {
-      payload['arguments'].execute             = payload['arguments'].execute || {};
-      payload['arguments'].execute.inArguments = [
+      payload["arguments"].execute             = payload["arguments"].execute || {};
+      payload["arguments"].execute.inArguments = [
         {
           messageTemplate:    messageTemplate,
           recipient:          recipientToken,
@@ -280,7 +280,7 @@ define(['postmonger'], function (Postmonger) {
 
       console.log('[SAVE] payload final:', JSON.stringify(payload));
 
-      connection.trigger('updateActivity', payload);
+      connection.trigger("updateActivity", payload);
     }
   }
 
