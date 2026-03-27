@@ -20,18 +20,20 @@
   "arguments": {
     "execute": {
       "inArguments": [
-        { "messageTemplate": "default" },
-        { "recipient": "{{Contact.Default.MobilePhone}}" },
-        { "installationNumber": "{{Contact.Default.MobilePhone}}" },
-        { "userState": "{{Contact.Default.MobilePhone}}" },
-        { "processedDocument": "{{Contact.Default.MobilePhone}}" },
-        { "serviceChoosed": "{{Contact.Default.MobilePhone}}" },
-        { "name": "{{Contact.Default.MobilePhone}}" },
-        { "recipient_field": "default" },
-        { "eventDefinitionKey": "default" },
-        { "journeyName": "default" },
-        { "journeyVersion": "default" },
-        { "createdDate": "default" }
+        {
+          "messageTemplate":    "{{Interaction.messageTemplate}}",
+          "recipient":          "{{Interaction.recipient}}",
+          "installationNumber": "{{Interaction.installationNumber}}",
+          "userState":          "{{Interaction.userState}}",
+          "processedDocument":  "{{Interaction.processedDocument}}",
+          "serviceChoosed":     "{{Interaction.serviceChoosed}}",
+          "name":               "{{Interaction.name}}",
+          "recipient_field":    "{{Interaction.recipient_field}}",
+          "eventDefinitionKey": "{{Interaction.eventDefinitionKey}}",
+          "journeyName":        "{{Interaction.journeyName}}",
+          "journeyVersion":     "{{Interaction.journeyVersion}}",
+          "createdDate":        "{{Interaction.createdDate}}"
+        }
       ],
       "outArguments": [],
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/execute",
