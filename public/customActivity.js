@@ -238,40 +238,50 @@ define(['postmonger'], function (Postmonger) {
     console.log('[SAVE] recipientField:', recipientField);
     console.log('[SAVE] eventDefinitionKey:', eventDefinitionKey);
 
+    // Monta tokens JB para cada param — {{Event.KEY.campo}}
     var messageParams = {};
     document.querySelectorAll('#paramsContainer select[data-param]')
       .forEach(function (sel) {
         var key = sel.getAttribute('data-param');
         var val = sel.value;
-        // Se tiver eventDefinitionKey usa token JB, senão usa valor direto
-        messageParams[key] = eventDefinitionKey
-          ? '{{Event.' + eventDefinitionKey + '.' + val + '}}'
-          : val;
+        messageParams[key] = '{{Event.' + eventDefinitionKey + '.' + val + '}}';
       });
 
-    payload['arguments']                     = payload['arguments'] || {};
-    payload['arguments'].execute             = payload['arguments'].execute || {};
-    payload['arguments'].execute.inArguments = [
-      {
-        messageTemplate:    messageTemplate,
-        recipient:          eventDefinitionKey
-                              ? '{{Event.' + eventDefinitionKey + '.' + recipientField + '}}'
-                              : recipientField,
-        messageParams:      messageParams,
-        journeyName:        journeyName,
-        journeyVersion:     journeyVersion,
-        eventDefinitionKey: eventDefinitionKey,
-        createdDate:        new Date().toISOString(),
-        recipient_field:    recipientField
-      }
-    ];
+    var recipientToken = '{{Event.' + eventDefinitionKey + '.' + recipientField + '}}';
 
-    payload['metaData']              = payload['metaData'] || {};
-    payload['metaData'].isConfigured = true;
+    // Guarda campos no payload["arguments"] direto — usado pelo JB para
+    // recarregar o wizard quando a activity já foi configurada
+    payload['arguments']               = payload['arguments'] || {};
+    payload['arguments'].messageTemplate = messageTemplate;
+    payload['arguments'].recipient_field = recipientField;
 
-    console.log('[SAVE] payload final:', JSON.stringify(payload));
+    // inArguments: objeto único dentro do array (padrão JB)
+    if (recipientToken) {
+      payload['arguments'].execute             = payload['arguments'].execute || {};
+      payload['arguments'].execute.inArguments = [
+        {
+          messageTemplate:    messageTemplate,
+          recipient:          recipientToken,
+          installationNumber: messageParams.installationNumber || '',
+          userState:          messageParams.userState          || '',
+          processedDocument:  messageParams.processedDocument  || '',
+          serviceChoosed:     messageParams.serviceChoosed     || '',
+          name:               messageParams.name               || '',
+          recipient_field:    recipientField,
+          eventDefinitionKey: eventDefinitionKey,
+          journeyName:        journeyName,
+          journeyVersion:     String(journeyVersion),
+          createdDate:        new Date().toISOString()
+        }
+      ];
 
-    connection.trigger('updateActivity', payload);
+      payload['metaData']              = payload['metaData'] || {};
+      payload['metaData'].isConfigured = true;
+
+      console.log('[SAVE] payload final:', JSON.stringify(payload));
+
+      connection.trigger('updateActivity', payload);
+    }
   }
 
 });
