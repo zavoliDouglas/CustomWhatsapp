@@ -13,17 +13,6 @@
   <script src="require.js"></script>
 
   <script>
-    // DEtemplates é injetado pelo servidor (MuleSoft DataWeave / Heroku template engine).
-    // Formato:
-    // [
-    //   {
-    //     "value":  "berlin_ura_faltadeluz_v1",
-    //     "nome":   "Falta de Luz v1",
-    //     "params": ["name","installationNumber","userState","processedDocument","serviceChoosed"]
-    //   }
-    // ]
-    var DEtemplates = /* SERVER_INJECT_TEMPLATES */ [];
-
     (function () {
       require({ baseUrl: '' }, ['customActivity']);
     })();
@@ -32,65 +21,55 @@
 
 <body>
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <!-- Header -->
   <div class="header-bar px-4 py-3 d-flex align-items-center justify-content-between">
-    <span class="fw-semibold text-dark" style="font-size:15px;">WhatsApp via BLIP</span>
-    <span id="stepIndicator" class="badge bg-secondary">Passo 1 de 2</span>
+    <span class="fw-semibold" style="font-size:15px;">WhatsApp via BLIP</span>
+    <span id="stepIndicator" class="step-badge">Passo 1 de 2</span>
   </div>
 
-  <!-- ── Body ──────────────────────────────────────────────────────────── -->
-  <div class="container-fluid px-4 py-4" style="background:#F6F6F6; min-height:500px;">
+  <!-- Body -->
+  <div class="main-body px-4 py-4">
 
-    <!-- STEP 1 — seleção de template e campo de telefone -->
+    <!-- ── STEP 1: template + telefone ──────────────────────────────────── -->
     <div id="step1">
-      <p class="h5 mb-4">Selecione o Template e o Campo de Telefone</p>
+      <p class="section-title">Configuração do Template</p>
 
-      <div class="row g-4">
-
-        <div class="col-md-5">
-          <label for="selectTemplate" class="form-label fw-semibold">Template WhatsApp</label>
-          <select id="selectTemplate" class="form-select form-select-sm"
-                  onchange="document.getElementById('alertTemplate').style.display='none'">
-            <option value="">— selecione —</option>
-          </select>
-          <div id="alertTemplate" class="alert alert-danger mt-2 py-2" style="display:none;">
-            Selecione um template para continuar.
-          </div>
+      <div class="field-group">
+        <label for="selectTemplate" class="field-label">Template WhatsApp</label>
+        <select id="selectTemplate" class="form-select form-select-sm">
+          <option value="">— selecione —</option>
+        </select>
+        <div id="alertTemplate" class="field-alert" style="display:none;">
+          Selecione um template para continuar.
         </div>
+      </div>
 
-        <div class="col-md-5">
-          <label for="selectRecipient" class="form-label fw-semibold">Campo de Telefone (recipient)</label>
-          <select id="selectRecipient" class="form-select form-select-sm"></select>
-          <small class="text-muted">Campo da Data Extension que será usado como destinatário.</small>
-        </div>
-
+      <div class="field-group">
+        <label for="selectRecipient" class="field-label">Campo de Telefone <span class="field-hint">(recipient)</span></label>
+        <select id="selectRecipient" class="form-select form-select-sm">
+          <option value="">— selecione —</option>
+        </select>
+        <small class="text-muted d-block mt-1" style="font-size:12px;">
+          Campo da Data Extension que será usado como número de destino.
+        </small>
       </div>
     </div>
 
-    <!-- STEP 2 — mapeamento dinâmico de parâmetros -->
+    <!-- ── STEP 2: mapeamento de parâmetros ─────────────────────────────── -->
     <div id="step2" style="display:none;">
-      <p class="h5 mb-1">Mapeie os Parâmetros do Template</p>
-      <p class="text-muted mb-4" style="font-size:13px;">
-        Cada parâmetro abaixo corresponde a um campo esperado pelo template no BLIP.<br>
-        Associe cada um a um campo da sua Data Extension.
+      <p class="section-title">Mapeamento de Parâmetros</p>
+      <p class="section-subtitle">
+        Associe cada parâmetro do template BLIP a um campo da sua Data Extension.
       </p>
 
-      <div id="paramsContainer" class="row g-3"></div>
+      <div id="paramsContainer"></div>
 
-      <div id="alertParams" class="alert alert-danger mt-3 py-2" style="display:none;">
+      <div id="alertParams" class="field-alert" style="display:none;">
         Preencha todos os parâmetros para continuar.
       </div>
     </div>
 
-  </div><!-- /container -->
-
-  <script>
-    // Atualiza badge de step
-    document.addEventListener('stepChanged', function (e) {
-      var label = e.detail === 'step1' ? 'Passo 1 de 2' : 'Passo 2 de 2';
-      document.getElementById('stepIndicator').textContent = label;
-    });
-  </script>
+  </div><!-- /main-body -->
 
 </body>
 </html>

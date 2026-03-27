@@ -21,7 +21,7 @@
     "execute": {
       "inArguments": [],
       "outArguments": [],
-      "url": "https://SEU-APP.herokuapp.com/execute",
+      "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/execute",
       "useJwt": true,
       "timeout": 10000,
       "retryCount": 2,
@@ -30,24 +30,24 @@
     }
   },
   "configurationArguments": {
-    "applicationExtensionKey": "SUA-EXTENSION-KEY-AQUI",
+    "applicationExtensionKey": "2ab4beac-d99e-41ae-a2ce-380d9be2012f",
     "save": {
-      "url": "https://SEU-APP.herokuapp.com/save",
+      "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/save",
       "verb": "POST",
       "useJwt": true
     },
     "publish": {
-      "url": "https://SEU-APP.herokuapp.com/publish",
+      "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/publish",
       "verb": "POST",
       "useJwt": true
     },
     "validate": {
-      "url": "https://SEU-APP.herokuapp.com/validate",
+      "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/validate",
       "verb": "POST",
       "useJwt": true
     },
     "stop": {
-      "url": "https://SEU-APP.herokuapp.com/stop",
+      "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/stop",
       "verb": "POST",
       "useJwt": true
     }
@@ -78,7 +78,35 @@
             }
           },
           {
-            "messageParams": {
+            "installationNumber": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "userState": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "processedDocument": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "serviceChoosed": {
+              "dataType": "Text",
+              "isNullable": true,
+              "direction": "in"
+            }
+          },
+          {
+            "name": {
               "dataType": "Text",
               "isNullable": true,
               "direction": "in"
