@@ -6,24 +6,15 @@ define(['postmonger'], function (Postmonger) {
   var schema      = [];
   var currentStep = 'step1';
 
-  // ─── Templates FIXOS (mock) ──────────────────────────────────────────────
-  // Baseado no cURL de exemplo: messageTemplate = "berlin_ura_faltadeluz_v1"
-  // e messageParams conforme o payload do BLIP.
+  // ─── Templates fixos ─────────────────────────────────────────────────────
   var TEMPLATES = [
     {
       value:  'berlin_ura_faltadeluz_v1',
       nome:   'Berlin URA Falta de Luz v1',
-      params: [
-        'installationNumber',
-        'userState',
-        'processedDocument',
-        'serviceChoosed',
-        'name'
-      ]
+      params: ['installationNumber', 'userState', 'processedDocument', 'serviceChoosed', 'name']
     }
   ];
 
-  // Labels amigáveis exibidos na UI ao lado do nome técnico do parâmetro
   var PARAM_LABELS = {
     installationNumber: 'Número de Instalação',
     userState:          'Estado do Usuário',
@@ -32,12 +23,44 @@ define(['postmonger'], function (Postmonger) {
     name:               'Nome do Cliente'
   };
 
-  // ─── Metadados da jornada ────────────────────────────────────────────────
+  // ─── Metadados da jornada ─────────────────────────────────────────────────
   var eventDefinitionKey = '';
   var journeyName        = '';
   var journeyVersion     = '';
 
-  // ─── Boot ────────────────────────────────────────────────────────────────
+  // ─── Registra TODOS os handlers ANTES de triggar ready ───────────────────
+  // (evita race condition onde o evento chega antes do handler estar pronto)
+
+  connection.on('initActivity', onInitActivity);
+
+  // requestedSchema: registrado aqui para garantir que está pronto
+  connection.on('requestedSchema', function (schemaData) {
+    schema = schemaData['schema'] || [];
+    populateTemplateSelect();
+    populateRecipientSelect();
+
+    var saved = getSavedArgs();
+    if (saved && saved.messageTemplate) {
+      restoreSavedState(saved);
+    }
+  });
+
+  connection.on('requestedInteraction', function (settings) {
+    try {
+      eventDefinitionKey = settings.triggers[0].metaData.eventDefinitionKey;
+    } catch (e) { eventDefinitionKey = ''; }
+    journeyName    = settings.name    || '';
+    journeyVersion = settings.version || '';
+  });
+
+  connection.on('requestedTokens',    function () {});
+  connection.on('requestedEndpoints', function () {});
+  connection.on('clickedNext',        onClickedNext);
+  connection.on('clickedBack',        onClickedBack);
+  connection.on('gotoStep',           onGotoStep);
+  connection.on('clickedDone',        save);
+
+  // ─── Boot: dispara ready DEPOIS de registrar todos os handlers ────────────
   $(window).ready(function () {
     connection.trigger('ready');
     connection.trigger('requestTokens');
@@ -46,34 +69,11 @@ define(['postmonger'], function (Postmonger) {
     connection.trigger('requestInteraction');
   });
 
-  connection.on('initActivity',       onInitActivity);
-  connection.on('requestedTokens',    function () {});
-  connection.on('requestedEndpoints', function () {});
-  connection.on('clickedNext',        onClickedNext);
-  connection.on('clickedBack',        onClickedBack);
-  connection.on('gotoStep',           onGotoStep);
-  connection.on('clickedDone',        save);
-
-  connection.on('requestedInteraction', function (settings) {
-    eventDefinitionKey = settings.triggers[0].metaData.eventDefinitionKey;
-    journeyName        = settings.name;
-    journeyVersion     = settings.version;
-  });
-
   // ─── initActivity ─────────────────────────────────────────────────────────
   function onInitActivity(data) {
     if (data) payload = data;
-
-    connection.on('requestedSchema', function (schemaData) {
-      schema = schemaData['schema'] || [];
-      populateTemplateSelect();
-      populateRecipientSelect();
-
-      var saved = getSavedArgs();
-      if (saved && saved.messageTemplate) {
-        restoreSavedState(saved);
-      }
-    });
+    // Schema pode já ter chegado antes do initActivity — se chegou, ok.
+    // Se não chegou ainda, o handler requestedSchema acima vai cuidar.
   }
 
   function getSavedArgs() {
@@ -84,6 +84,9 @@ define(['postmonger'], function (Postmonger) {
   // ─── Step 1 ───────────────────────────────────────────────────────────────
   function populateTemplateSelect() {
     var sel = document.getElementById('selectTemplate');
+    // Limpa opções anteriores (exceto o default)
+    while (sel.options.length > 1) sel.remove(1);
+
     TEMPLATES.forEach(function (t) {
       var opt = document.createElement('option');
       opt.value = t.value;
@@ -95,6 +98,8 @@ define(['postmonger'], function (Postmonger) {
 
   function populateRecipientSelect() {
     var sel = document.getElementById('selectRecipient');
+    while (sel.options.length > 1) sel.remove(1);
+
     schema.forEach(function (field) {
       var opt = document.createElement('option');
       opt.value = field.name;
@@ -104,7 +109,7 @@ define(['postmonger'], function (Postmonger) {
     $('#selectRecipient').select2({ width: '320px' });
   }
 
-  // ─── Step 2: campos fixos baseados no template ────────────────────────────
+  // ─── Step 2 ───────────────────────────────────────────────────────────────
   function buildParamFields(templateValue) {
     var tmpl      = TEMPLATES.find(function (t) { return t.value === templateValue; });
     var container = document.getElementById('paramsContainer');
@@ -159,7 +164,6 @@ define(['postmonger'], function (Postmonger) {
       Object.keys(saved.messageParams).forEach(function (key) {
         var el = document.getElementById('param_' + key);
         if (!el) return;
-        // Token salvo: "{{Event.KEY.nomeCampo}}" — extrai só nomeCampo
         var fieldName = saved.messageParams[key]
           .replace(/^\{\{Event\.[^.]+\./, '')
           .replace(/\}\}$/, '');
@@ -183,13 +187,14 @@ define(['postmonger'], function (Postmonger) {
 
   function onClickedNext() {
     if (currentStep === 'step1') {
-      if (!$('#selectTemplate').val()) {
+      var tmplVal = $('#selectTemplate').val();
+      if (!tmplVal) {
         showAlert('alertTemplate');
         connection.trigger('ready');
         return;
       }
       hideAlert('alertTemplate');
-      buildParamFields($('#selectTemplate').val());
+      buildParamFields(tmplVal);
       showStep('step2');
       connection.trigger('nextStep');
 
@@ -225,45 +230,46 @@ define(['postmonger'], function (Postmonger) {
   function hideAlert(id) { document.getElementById(id).style.display = 'none';  }
 
   // ─── Save ─────────────────────────────────────────────────────────────────
-  //
-  //  Monta os inArguments que o JB vai enviar ao /execute.
-  //  O JB resolve cada {{Event.KEY.campo}} para o valor real do contato
-  //  antes de chamar o Heroku (dev) ou o Mulesoft (prod).
-  //
   function save() {
     var messageTemplate = $('#selectTemplate').val();
     var recipientField  = $('#selectRecipient').val();
 
-    // { paramBLIP: "{{Event.KEY.campoDE}}" }
+    console.log('[SAVE] messageTemplate:', messageTemplate);
+    console.log('[SAVE] recipientField:', recipientField);
+    console.log('[SAVE] eventDefinitionKey:', eventDefinitionKey);
+
     var messageParams = {};
     document.querySelectorAll('#paramsContainer select[data-param]')
       .forEach(function (sel) {
-        messageParams[sel.getAttribute('data-param')] =
-          '{{Event.' + eventDefinitionKey + '.' + sel.value + '}}';
+        var key = sel.getAttribute('data-param');
+        var val = sel.value;
+        // Se tiver eventDefinitionKey usa token JB, senão usa valor direto
+        messageParams[key] = eventDefinitionKey
+          ? '{{Event.' + eventDefinitionKey + '.' + val + '}}'
+          : val;
       });
 
     payload['arguments']                     = payload['arguments'] || {};
     payload['arguments'].execute             = payload['arguments'].execute || {};
     payload['arguments'].execute.inArguments = [
       {
-        // Campos que o Mulesoft usa para montar o POST ao BLIP
         messageTemplate:    messageTemplate,
-        recipient:          '{{Event.' + eventDefinitionKey + '.' + recipientField + '}}',
+        recipient:          eventDefinitionKey
+                              ? '{{Event.' + eventDefinitionKey + '.' + recipientField + '}}'
+                              : recipientField,
         messageParams:      messageParams,
-
-        // Rastreabilidade
         journeyName:        journeyName,
         journeyVersion:     journeyVersion,
         eventDefinitionKey: eventDefinitionKey,
         createdDate:        new Date().toISOString(),
-
-        // Reload do wizard
         recipient_field:    recipientField
       }
     ];
 
     payload['metaData']              = payload['metaData'] || {};
     payload['metaData'].isConfigured = true;
+
+    console.log('[SAVE] payload final:', JSON.stringify(payload));
 
     connection.trigger('updateActivity', payload);
   }
