@@ -76,41 +76,6 @@
               "isNullable": false,
               "direction": "in"
             }
-          },
-          {
-            "installationNumber": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "userState": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "processedDocument": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "serviceChoosed": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "name": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
           }
         ],
         "outArguments": []
