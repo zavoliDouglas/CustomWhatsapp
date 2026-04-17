@@ -6,38 +6,213 @@ define(['postmonger'], function (Postmonger) {
   var schema      = [];
   var currentStep = 'step1';
 
-  // ─── Templates FIXOS (mock) ──────────────────────────────────────────────
-  // Baseado no cURL de exemplo: messageTemplate = "berlin_ura_faltadeluz_v1"
-  // e messageParams conforme o payload do BLIP.
+  // ─── Templates ───────────────────────────────────────────────────────────
+  //
+  // COMO ADICIONAR OU EDITAR UM TEMPLATE:
+  //   1. Copie um bloco existente abaixo e ajuste os campos
+  //   2. value  → nome exato do template cadastrado no BLIP/WABA
+  //   3. nome   → label amigável que aparece no select do wizard
+  //   4. params → lista de variáveis {{}} do template (ver Figma Projeto 734)
+  //   5. Se o param ainda não existir em PARAM_LABELS, adicione lá também
+  //   6. Faça commit + deploy — o wizard atualiza automaticamente
+  //
+  // ATENÇÃO: inclua TODOS os templates que o WABA aprovar, mesmo os ainda
+  // não cadastrados. Basta removê-los ou comentá-los quando necessário.
+  //
   var TEMPLATES = [
+
+    // ── Ligação Nova ─────────────────────────────────────────────────────────
+    {
+      value:  'enel_ln_abertura_sembotao_01',
+      nome:   'LN — Abertura',
+      params: ['nome', 'protocolo', 'numero', 'prazo']
+    },
+    {
+      value:  'enel_ln_despacho_01',
+      nome:   'LN — Despacho',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_ln_boasvindas_01',
+      nome:   'LN — Boas-vindas / Conclusão',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_ln_rejeicaoausenciatitular_01',
+      nome:   'LN — Rejeição: Ausência de responsável',
+      params: ['nome', 'protocolo', 'numero', 'data_visita']
+    },
+
+    // ── Troca de Titularidade ────────────────────────────────────────────────
+    {
+      value:  'enel_tt_abertura_01',
+      nome:   'TT — Abertura',
+      params: ['nome', 'endereco']
+    },
+    {
+      value:  'enel_tt_analise_emandamento_01',
+      nome:   'TT — Em andamento / Análise',
+      params: ['nome', 'protocolo']
+    },
+    {
+      value:  'enel_tt_boasvindas_01',
+      nome:   'TT — Boas-vindas / Conclusão',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_tt_rejeicao_01',
+      nome:   'TT — Rejeição',
+      params: ['protocolo']
+    },
+
+    // ── Corte e Religa ───────────────────────────────────────────────────────
+    {
+      value:  'berlin_enel_pendenciadepagamentocr_01',
+      nome:   'CR — Pendência de Pagamento',
+      params: ['nome', 'numero', 'valor']
+    },
+    {
+      value:  'enel_cr_cancelamentodecorte_01',
+      nome:   'CR — Cancelamento de Corte',
+      params: ['nome']
+    },
+    {
+      value:  'berlin_enel_corteexecutadocr_01',
+      nome:   'CR — Corte Executado',
+      params: ['nome', 'numero', 'valor']
+    },
+    {
+      value:  'berlin_enel_pagamentoparcialcr_01',
+      nome:   'CR — Pagamento Parcial',
+      params: ['nome']
+    },
+    {
+      value:  'berlin_enel_pagamentototalcr_01',
+      nome:   'CR — Pagamento Total / Envio Religa',
+      params: ['nome', 'protocolo', 'numero', 'prazo']
+    },
+    // CR NA6 Despacho Religa — não cadastrado no WABA ainda
+    // {
+    //   value:  'enel_cr_despachoreliga_01',
+    //   nome:   'CR — Despacho Religa',
+    //   params: ['nome', 'protocolo', 'numero']
+    // },
+    // CR NA7 Execução Religa — não cadastrado no WABA ainda
+    // {
+    //   value:  'enel_cr_execucaoreliga_01',
+    //   nome:   'CR — Execução Religa',
+    //   params: ['nome']
+    // },
+    {
+      value:  'berlin_enel_rejeicaoreligacr_01',
+      nome:   'CR — Rejeição Religa',
+      params: ['nome']
+    },
+
+    // ── Faturamento ──────────────────────────────────────────────────────────
+    {
+      value:  'berlin_enel_tarifabranca_01',
+      nome:   'FA — Tarifa Branca',
+      params: ['nome', 'de', 'para', 'numero', 'endereco', 'site']
+    },
+    {
+      value:  'berlin_enel_tarifasocial_01',
+      nome:   'FA — Tarifa Social',
+      params: ['nome', 'numero', 'endereco']
+    },
+    {
+      value:  'berlin_enel_alertavencimentoconta_01',
+      nome:   'FA — Alerta de Vencimento de Conta',
+      params: ['nome', 'numero', 'endereco', 'valor', 'data_vencimento']
+    },
+    {
+      value:  'berlin_enel_contavencida_01',
+      nome:   'FA — Conta Vencida',
+      params: ['nome', 'valor', 'data_vencimento']
+    },
+    {
+      value:  'berlin_enel_liberacaocriticafaturamento_01',
+      nome:   'FA — Liberação Crítica Faturamento',
+      params: ['nome', 'valor', 'data_vencimento']
+    },
+
+    // ── URA ──────────────────────────────────────────────────────────────────
     {
       value:  'berlin_ura_faltadeluz_v1',
-      nome:   'Berlin URA Falta de Luz v1',
-      params: [
-        'installationNumber',
-        'userState',
-        'processedDocument',
-        'serviceChoosed',
-        'name'
-      ]
+      nome:   'URA — Falta de Luz',
+      params: ['name', 'installationNumber', 'userState', 'processedDocument', 'serviceChoosed']
     }
+
+    // ── Novo template — copie e preencha: ────────────────────────────────────
+    // ,{
+    //   value:  'nome_exato_no_blip',
+    //   nome:   'Seção — Descrição amigável',
+    //   params: ['param1', 'param2', 'param3']
+    // }
   ];
 
-  // Labels amigáveis exibidos na UI ao lado do nome técnico do parâmetro
+  // Labels amigáveis exibidos na UI ao lado do nome técnico de cada parâmetro.
+  // Adicione aqui o label de qualquer novo param que criar em TEMPLATES.
   var PARAM_LABELS = {
+    // Comuns
+    nome:           'Nome do Cliente',
+    protocolo:      'Número do Protocolo',
+    numero:         'Número da UC',
+    prazo:          'Prazo (horas ou dias úteis)',
+    data_visita:    'Data da Visita Técnica',
+    endereco:       'Endereço do Imóvel',
+    valor:          'Valor (R$)',
+    data_vencimento:'Data de Vencimento',
+    // Tarifa Branca
+    de:             'Tarifa Anterior',
+    para:           'Nova Tarifa',
+    site:           'Link do Site',
+    // URA
+    name:               'Nome do Cliente (URA)',
     installationNumber: 'Número de Instalação',
     userState:          'Estado do Usuário',
     processedDocument:  'CPF / Documento',
-    serviceChoosed:     'Serviço Selecionado',
-    name:               'Nome do Cliente'
+    serviceChoosed:     'Serviço Selecionado'
   };
 
-  // ─── Metadados da jornada ────────────────────────────────────────────────
+  // ─── Metadados da jornada ─────────────────────────────────────────────────
   var eventDefinitionKey = '';
   var journeyName        = '';
   var journeyVersion     = '';
 
-  // ─── Boot ────────────────────────────────────────────────────────────────
+  // ─── Registra TODOS os handlers ANTES de triggar ready ───────────────────
+  // (evita race condition onde o evento chega antes do handler estar pronto)
+
+  connection.on('initActivity', onInitActivity);
+
+  // requestedSchema: registrado aqui para garantir que está pronto
+  connection.on('requestedSchema', function (schemaData) {
+    schema = schemaData['schema'] || [];
+    populateTemplateSelect();
+    populateRecipientSelect();
+
+    var saved = getSavedArgs();
+    if (saved && saved.messageTemplate) {
+      restoreSavedState(saved);
+    }
+  });
+
+  connection.on('requestedInteraction', function (settings) {
+    try {
+      eventDefinitionKey = settings.triggers[0].metaData.eventDefinitionKey;
+    } catch (e) { eventDefinitionKey = ''; }
+    journeyName    = settings.name    || '';
+    journeyVersion = settings.version || '';
+  });
+
+  connection.on('requestedTokens',    function () {});
+  connection.on('requestedEndpoints', function () {});
+  connection.on('clickedNext',        onClickedNext);
+  connection.on('clickedBack',        onClickedBack);
+  connection.on('gotoStep',           onGotoStep);
+  connection.on('clickedDone',        save);
+
+  // ─── Boot: dispara ready DEPOIS de registrar todos os handlers ────────────
   $(window).ready(function () {
     connection.trigger('ready');
     connection.trigger('requestTokens');
@@ -46,44 +221,33 @@ define(['postmonger'], function (Postmonger) {
     connection.trigger('requestInteraction');
   });
 
-  connection.on('initActivity',       onInitActivity);
-  connection.on('requestedTokens',    function () {});
-  connection.on('requestedEndpoints', function () {});
-  connection.on('clickedNext',        onClickedNext);
-  connection.on('clickedBack',        onClickedBack);
-  connection.on('gotoStep',           onGotoStep);
-  connection.on('clickedDone',        save);
-
-  connection.on('requestedInteraction', function (settings) {
-    eventDefinitionKey = settings.triggers[0].metaData.eventDefinitionKey;
-    journeyName        = settings.name;
-    journeyVersion     = settings.version;
-  });
-
   // ─── initActivity ─────────────────────────────────────────────────────────
   function onInitActivity(data) {
     if (data) payload = data;
-
-    connection.on('requestedSchema', function (schemaData) {
-      schema = schemaData['schema'] || [];
-      populateTemplateSelect();
-      populateRecipientSelect();
-
-      var saved = getSavedArgs();
-      if (saved && saved.messageTemplate) {
-        restoreSavedState(saved);
-      }
-    });
+    // Schema pode já ter chegado antes do initActivity — se chegou, ok.
+    // Se não chegou ainda, o handler requestedSchema acima vai cuidar.
   }
 
   function getSavedArgs() {
-    try { return payload.arguments.execute.inArguments[0] || {}; }
-    catch (e) { return {}; }
+    try {
+      var args = payload.arguments.execute.inArguments;
+      if (!args || !args.length) return {};
+      // inArguments pode ser array de objetos separados ou objeto único
+      if (Array.isArray(args) && typeof args[0] === 'object') {
+        return args.reduce(function (acc, obj) {
+          return Object.assign(acc, obj);
+        }, {});
+      }
+      return args[0] || {};
+    } catch (e) { return {}; }
   }
 
   // ─── Step 1 ───────────────────────────────────────────────────────────────
   function populateTemplateSelect() {
     var sel = document.getElementById('selectTemplate');
+    // Limpa opções anteriores (exceto o default)
+    while (sel.options.length > 1) sel.remove(1);
+
     TEMPLATES.forEach(function (t) {
       var opt = document.createElement('option');
       opt.value = t.value;
@@ -95,6 +259,8 @@ define(['postmonger'], function (Postmonger) {
 
   function populateRecipientSelect() {
     var sel = document.getElementById('selectRecipient');
+    while (sel.options.length > 1) sel.remove(1);
+
     schema.forEach(function (field) {
       var opt = document.createElement('option');
       opt.value = field.name;
@@ -104,7 +270,7 @@ define(['postmonger'], function (Postmonger) {
     $('#selectRecipient').select2({ width: '320px' });
   }
 
-  // ─── Step 2: campos fixos baseados no template ────────────────────────────
+  // ─── Step 2 ───────────────────────────────────────────────────────────────
   function buildParamFields(templateValue) {
     var tmpl      = TEMPLATES.find(function (t) { return t.value === templateValue; });
     var container = document.getElementById('paramsContainer');
@@ -159,7 +325,6 @@ define(['postmonger'], function (Postmonger) {
       Object.keys(saved.messageParams).forEach(function (key) {
         var el = document.getElementById('param_' + key);
         if (!el) return;
-        // Token salvo: "{{Event.KEY.nomeCampo}}" — extrai só nomeCampo
         var fieldName = saved.messageParams[key]
           .replace(/^\{\{Event\.[^.]+\./, '')
           .replace(/\}\}$/, '');
@@ -183,13 +348,14 @@ define(['postmonger'], function (Postmonger) {
 
   function onClickedNext() {
     if (currentStep === 'step1') {
-      if (!$('#selectTemplate').val()) {
+      var tmplVal = $('#selectTemplate').val();
+      if (!tmplVal) {
         showAlert('alertTemplate');
         connection.trigger('ready');
         return;
       }
       hideAlert('alertTemplate');
-      buildParamFields($('#selectTemplate').val());
+      buildParamFields(tmplVal);
       showStep('step2');
       connection.trigger('nextStep');
 
@@ -225,47 +391,58 @@ define(['postmonger'], function (Postmonger) {
   function hideAlert(id) { document.getElementById(id).style.display = 'none';  }
 
   // ─── Save ─────────────────────────────────────────────────────────────────
-  //
-  //  Monta os inArguments que o JB vai enviar ao /execute.
-  //  O JB resolve cada {{Event.KEY.campo}} para o valor real do contato
-  //  antes de chamar o Heroku (dev) ou o Mulesoft (prod).
-  //
   function save() {
     var messageTemplate = $('#selectTemplate').val();
     var recipientField  = $('#selectRecipient').val();
 
-    // { paramBLIP: "{{Event.KEY.campoDE}}" }
-    var messageParams = {};
+    console.log('[SAVE] messageTemplate:', messageTemplate);
+    console.log('[SAVE] recipientField:', recipientField);
+    console.log('[SAVE] eventDefinitionKey:', eventDefinitionKey);
+
+    var toToken = function (field) {
+      return '{{Event.' + eventDefinitionKey + '.' + field + '}}';
+    };
+
+    // Coleta campos mapeados no Step 2
+    var mapped = {};
     document.querySelectorAll('#paramsContainer select[data-param]')
       .forEach(function (sel) {
-        messageParams[sel.getAttribute('data-param')] =
-          '{{Event.' + eventDefinitionKey + '.' + sel.value + '}}';
+        mapped[sel.getAttribute('data-param')] = sel.value;
       });
 
-    payload['arguments']                     = payload['arguments'] || {};
-    payload['arguments'].execute             = payload['arguments'].execute || {};
-    payload['arguments'].execute.inArguments = [
-      {
-        // Campos que o Mulesoft usa para montar o POST ao BLIP
-        messageTemplate:    messageTemplate,
-        recipient:          '{{Event.' + eventDefinitionKey + '.' + recipientField + '}}',
-        messageParams:      messageParams,
-
-        // Rastreabilidade
-        journeyName:        journeyName,
-        journeyVersion:     journeyVersion,
-        eventDefinitionKey: eventDefinitionKey,
-        createdDate:        new Date().toISOString(),
-
-        // Reload do wizard
-        recipient_field:    recipientField
-      }
+    // inArguments como array de objetos separados —
+    // exatamente igual ao formato declarado no config.json
+    // para o JB reconhecer, persistir e reenviar no /execute
+    var inArguments = [
+      { messageTemplate:    messageTemplate },
+      { recipient:          toToken(recipientField) },
+      { installationNumber: mapped.installationNumber ? toToken(mapped.installationNumber) : '' },
+      { userState:          mapped.userState          ? toToken(mapped.userState)          : '' },
+      { processedDocument:  mapped.processedDocument  ? toToken(mapped.processedDocument)  : '' },
+      { serviceChoosed:     mapped.serviceChoosed      ? toToken(mapped.serviceChoosed)     : '' },
+      { name:               mapped.name               ? toToken(mapped.name)               : '' },
+      { recipient_field:    recipientField },
+      { eventDefinitionKey: eventDefinitionKey },
+      { journeyName:        journeyName },
+      { journeyVersion:     String(journeyVersion) },
+      { createdDate:        new Date().toISOString() }
     ];
 
-    payload['metaData']              = payload['metaData'] || {};
-    payload['metaData'].isConfigured = true;
+    if (recipientField) {
+      payload['arguments']                     = payload['arguments'] || {};
+      payload['arguments'].execute             = payload['arguments'].execute || {};
+      payload['arguments'].execute.inArguments = inArguments;
+      payload['arguments'].messageTemplate     = messageTemplate;
+      payload['arguments'].recipient_field     = recipientField;
 
-    connection.trigger('updateActivity', payload);
+      payload['metaData']              = payload['metaData'] || {};
+      payload['metaData'].isConfigured = true;
+
+      console.log('[SAVE] inArguments:', JSON.stringify(inArguments));
+      console.log('[SAVE] payload completo:', JSON.stringify(payload));
+
+      connection.trigger('updateActivity', payload);
+    }
   }
 
 });
