@@ -6,21 +6,173 @@ define(['postmonger'], function (Postmonger) {
   var schema      = [];
   var currentStep = 'step1';
 
-  // ─── Templates fixos ─────────────────────────────────────────────────────
+  // ─── Templates ───────────────────────────────────────────────────────────
+  //
+  // COMO ADICIONAR OU EDITAR UM TEMPLATE:
+  //   1. Copie um bloco existente abaixo e ajuste os campos
+  //   2. value  → nome exato do template cadastrado no BLIP/WABA
+  //   3. nome   → label amigável que aparece no select do wizard
+  //   4. params → lista de variáveis {{}} do template (ver Figma Projeto 734)
+  //   5. Se o param ainda não existir em PARAM_LABELS, adicione lá também
+  //   6. Faça commit + deploy — o wizard atualiza automaticamente
+  //
+  // ATENÇÃO: inclua TODOS os templates que o WABA aprovar, mesmo os ainda
+  // não cadastrados. Basta removê-los ou comentá-los quando necessário.
+  //
   var TEMPLATES = [
+
+    // ── Ligação Nova ─────────────────────────────────────────────────────────
+    {
+      value:  'enel_ln_abertura_sembotao_01',
+      nome:   'LN — Abertura',
+      params: ['nome', 'protocolo', 'numero', 'prazo']
+    },
+    {
+      value:  'enel_ln_despacho_01',
+      nome:   'LN — Despacho',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_ln_boasvindas_01',
+      nome:   'LN — Boas-vindas / Conclusão',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_ln_rejeicaoausenciatitular_01',
+      nome:   'LN — Rejeição: Ausência de responsável',
+      params: ['nome', 'protocolo', 'numero', 'data_visita']
+    },
+
+    // ── Troca de Titularidade ────────────────────────────────────────────────
+    {
+      value:  'enel_tt_abertura_01',
+      nome:   'TT — Abertura',
+      params: ['nome', 'endereco']
+    },
+    {
+      value:  'enel_tt_analise_emandamento_01',
+      nome:   'TT — Em andamento / Análise',
+      params: ['nome', 'protocolo']
+    },
+    {
+      value:  'enel_tt_boasvindas_01',
+      nome:   'TT — Boas-vindas / Conclusão',
+      params: ['nome', 'protocolo', 'numero']
+    },
+    {
+      value:  'enel_tt_rejeicao_01',
+      nome:   'TT — Rejeição',
+      params: ['protocolo']
+    },
+
+    // ── Corte e Religa ───────────────────────────────────────────────────────
+    {
+      value:  'berlin_enel_pendenciadepagamentocr_01',
+      nome:   'CR — Pendência de Pagamento',
+      params: ['nome', 'numero', 'valor']
+    },
+    {
+      value:  'enel_cr_cancelamentodecorte_01',
+      nome:   'CR — Cancelamento de Corte',
+      params: ['nome']
+    },
+    {
+      value:  'berlin_enel_corteexecutadocr_01',
+      nome:   'CR — Corte Executado',
+      params: ['nome', 'numero', 'valor']
+    },
+    {
+      value:  'berlin_enel_pagamentoparcialcr_01',
+      nome:   'CR — Pagamento Parcial',
+      params: ['nome']
+    },
+    {
+      value:  'berlin_enel_pagamentototalcr_01',
+      nome:   'CR — Pagamento Total / Envio Religa',
+      params: ['nome', 'protocolo', 'numero', 'prazo']
+    },
+    // CR NA6 Despacho Religa — não cadastrado no WABA ainda
+    // {
+    //   value:  'enel_cr_despachoreliga_01',
+    //   nome:   'CR — Despacho Religa',
+    //   params: ['nome', 'protocolo', 'numero']
+    // },
+    // CR NA7 Execução Religa — não cadastrado no WABA ainda
+    // {
+    //   value:  'enel_cr_execucaoreliga_01',
+    //   nome:   'CR — Execução Religa',
+    //   params: ['nome']
+    // },
+    {
+      value:  'berlin_enel_rejeicaoreligacr_01',
+      nome:   'CR — Rejeição Religa',
+      params: ['nome']
+    },
+
+    // ── Faturamento ──────────────────────────────────────────────────────────
+    {
+      value:  'berlin_enel_tarifabranca_01',
+      nome:   'FA — Tarifa Branca',
+      params: ['nome', 'de', 'para', 'numero', 'endereco', 'site']
+    },
+    {
+      value:  'berlin_enel_tarifasocial_01',
+      nome:   'FA — Tarifa Social',
+      params: ['nome', 'numero', 'endereco']
+    },
+    {
+      value:  'berlin_enel_alertavencimentoconta_01',
+      nome:   'FA — Alerta de Vencimento de Conta',
+      params: ['nome', 'numero', 'endereco', 'valor', 'data_vencimento']
+    },
+    {
+      value:  'berlin_enel_contavencida_01',
+      nome:   'FA — Conta Vencida',
+      params: ['nome', 'valor', 'data_vencimento']
+    },
+    {
+      value:  'berlin_enel_liberacaocriticafaturamento_01',
+      nome:   'FA — Liberação Crítica Faturamento',
+      params: ['nome', 'valor', 'data_vencimento']
+    },
+
+    // ── URA ──────────────────────────────────────────────────────────────────
     {
       value:  'berlin_ura_faltadeluz_v1',
-      nome:   'Berlin URA Falta de Luz v1',
-      params: ['installationNumber', 'userState', 'processedDocument', 'serviceChoosed', 'name']
+      nome:   'URA — Falta de Luz',
+      params: ['name', 'installationNumber', 'userState', 'processedDocument', 'serviceChoosed']
     }
+
+    // ── Novo template — copie e preencha: ────────────────────────────────────
+    // ,{
+    //   value:  'nome_exato_no_blip',
+    //   nome:   'Seção — Descrição amigável',
+    //   params: ['param1', 'param2', 'param3']
+    // }
   ];
 
+  // Labels amigáveis exibidos na UI ao lado do nome técnico de cada parâmetro.
+  // Adicione aqui o label de qualquer novo param que criar em TEMPLATES.
   var PARAM_LABELS = {
+    // Comuns
+    nome:           'Nome do Cliente',
+    protocolo:      'Número do Protocolo',
+    numero:         'Número da UC',
+    prazo:          'Prazo (horas ou dias úteis)',
+    data_visita:    'Data da Visita Técnica',
+    endereco:       'Endereço do Imóvel',
+    valor:          'Valor (R$)',
+    data_vencimento:'Data de Vencimento',
+    // Tarifa Branca
+    de:             'Tarifa Anterior',
+    para:           'Nova Tarifa',
+    site:           'Link do Site',
+    // URA
+    name:               'Nome do Cliente (URA)',
     installationNumber: 'Número de Instalação',
     userState:          'Estado do Usuário',
     processedDocument:  'CPF / Documento',
-    serviceChoosed:     'Serviço Selecionado',
-    name:               'Nome do Cliente'
+    serviceChoosed:     'Serviço Selecionado'
   };
 
   // ─── Metadados da jornada ─────────────────────────────────────────────────
