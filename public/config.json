@@ -38,22 +38,22 @@
     "save": {
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/save",
       "verb": "POST",
-      "useJwt": true
+      "useJwt": false
     },
     "publish": {
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/publish",
       "verb": "POST",
-      "useJwt": true
+      "useJwt": false
     },
     "validate": {
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/validate",
       "verb": "POST",
-      "useJwt": true
+      "useJwt": false
     },
     "stop": {
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/stop",
       "verb": "POST",
-      "useJwt": true
+      "useJwt": false
     }
   },
   "userInterfaces": {
