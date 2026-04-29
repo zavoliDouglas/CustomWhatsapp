@@ -424,29 +424,38 @@ define(['postmonger'], function (Postmonger) {
 
     var recipientToken = toToken(recipientField);
 
-    // Payload BLIP completo — o SFMC resolve os tokens {{Event.KEY.campo}}
-    // para os valores reais do contato antes de chamar o /execute no Mulesoft
+    // ⚠️  ATENÇÃO — FechaHora, IdPeticion e id são gerados no momento em que
+    // o marketer configura a activity (save), não no momento do disparo.
+    // Isso significa que todos os contatos dessa jornada compartilharão o
+    // mesmo IdPeticion e FechaHora. Se o Mulesoft precisar de valores únicos
+    // por disparo, ele deve sobrescrever esses campos antes de chamar o BLIP.
+    var now       = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+    var requestId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+
     var blipPayload = {
       Header: {
         SistemaOrigen:     'SFMC',
-        FechaHora:         '{{NOW}}',        // Mulesoft substitui pelo timestamp real
+        FechaHora:         now,
         Funcionalidad:     'SendCampaign',
         TipoFuncionalidad: 'sfmc_whatsapp',
-        IdPeticion:        '{{UUID}}',       // Mulesoft gera UUID real
+        IdPeticion:        requestId,
         CodSistema:        'BLIP'
       },
       Body: {
-        id:     '{{UUID}}',
+        id:     requestId,
         to:     'postmaster@activecampaign.msging.net',
         method: 'set',
         uri:    '/campaign/full',
         type:   'application/vnd.iris.activecampaign.full-campaign+json',
         resource: {
           campaign: {
-            name:         recipientToken + '-{{NOW}}',
+            name:         recipientToken,
             campaignType: 'Individual',
-            MasterState:  '{{MASTER_STATE}}', // Mulesoft substitui pela config
-            flowId:       '{{FLOW_ID}}',      // Mulesoft substitui pela config
+            MasterState:  'notificaourabeta@msging.net',
+            flowId:       '310b7c5c-849e-49b9-ab7b-8c7f21658c94',
             stateId:      'onboarding',
             channelType:  'WhatsApp'
           },
