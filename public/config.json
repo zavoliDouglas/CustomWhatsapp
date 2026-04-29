@@ -21,23 +21,12 @@
     "execute": {
       "inArguments": [
         {
-          "messageTemplate":    "{{Interaction.messageTemplate}}",
-          "recipient":          "{{Interaction.recipient}}",
-          "installationNumber": "{{Interaction.installationNumber}}",
-          "userState":          "{{Interaction.userState}}",
-          "processedDocument":  "{{Interaction.processedDocument}}",
-          "serviceChoosed":     "{{Interaction.serviceChoosed}}",
-          "name":               "{{Interaction.name}}",
-          "recipient_field":    "{{Interaction.recipient_field}}",
-          "eventDefinitionKey": "{{Interaction.eventDefinitionKey}}",
-          "journeyName":        "{{Interaction.journeyName}}",
-          "journeyVersion":     "{{Interaction.journeyVersion}}",
-          "createdDate":        "{{Interaction.createdDate}}"
+          "blipPayload": "{{Interaction.blipPayload}}"
         }
       ],
       "outArguments": [],
       "url": "https://custom-whatsapp-enel-b89c485957c2.herokuapp.com/execute",
-      "useJwt": true,
+      "useJwt": false,
       "timeout": 10000,
       "retryCount": 2,
       "retryDelay": 1000,
@@ -79,51 +68,9 @@
       "execute": {
         "inArguments": [
           {
-            "messageTemplate": {
+            "blipPayload": {
               "dataType": "Text",
               "isNullable": false,
-              "direction": "in"
-            }
-          },
-          {
-            "recipient": {
-              "dataType": "Phone",
-              "isNullable": false,
-              "direction": "in"
-            }
-          },
-          {
-            "installationNumber": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "userState": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "processedDocument": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "serviceChoosed": {
-              "dataType": "Text",
-              "isNullable": true,
-              "direction": "in"
-            }
-          },
-          {
-            "name": {
-              "dataType": "Text",
-              "isNullable": true,
               "direction": "in"
             }
           }

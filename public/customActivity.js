@@ -391,6 +391,12 @@ define(['postmonger'], function (Postmonger) {
   function hideAlert(id) { document.getElementById(id).style.display = 'none';  }
 
   // ─── Save ─────────────────────────────────────────────────────────────────
+  //
+  // Com useJwt: false, o SFMC envia os inArguments como JSON puro para o
+  // Mulesoft. O Mulesoft recebe e repassa direto para o BLIP sem transformar.
+  // Por isso montamos o payload BLIP completo aqui no frontend e serializamos
+  // como string em blipPayload — o Mulesoft só faz JSON.parse e POST.
+  //
   function save() {
     var messageTemplate = $('#selectTemplate').val();
     var recipientField  = $('#selectRecipient').val();
@@ -410,35 +416,67 @@ define(['postmonger'], function (Postmonger) {
         mapped[sel.getAttribute('data-param')] = sel.value;
       });
 
-    // inArguments como array de objetos separados —
-    // exatamente igual ao formato declarado no config.json
-    // para o JB reconhecer, persistir e reenviar no /execute
-    var inArguments = [
-      { messageTemplate:    messageTemplate },
-      { recipient:          toToken(recipientField) },
-      { installationNumber: mapped.installationNumber ? toToken(mapped.installationNumber) : '' },
-      { userState:          mapped.userState          ? toToken(mapped.userState)          : '' },
-      { processedDocument:  mapped.processedDocument  ? toToken(mapped.processedDocument)  : '' },
-      { serviceChoosed:     mapped.serviceChoosed      ? toToken(mapped.serviceChoosed)     : '' },
-      { name:               mapped.name               ? toToken(mapped.name)               : '' },
-      { recipient_field:    recipientField },
-      { eventDefinitionKey: eventDefinitionKey },
-      { journeyName:        journeyName },
-      { journeyVersion:     String(journeyVersion) },
-      { createdDate:        new Date().toISOString() }
-    ];
+    // Monta messageParams com tokens JB para cada param do template
+    var messageParams = {};
+    Object.keys(mapped).forEach(function (key) {
+      if (mapped[key]) messageParams[key] = toToken(mapped[key]);
+    });
+
+    var recipientToken = toToken(recipientField);
+
+    // Payload BLIP completo — o SFMC resolve os tokens {{Event.KEY.campo}}
+    // para os valores reais do contato antes de chamar o /execute no Mulesoft
+    var blipPayload = {
+      Header: {
+        SistemaOrigen:     'SFMC',
+        FechaHora:         '{{NOW}}',        // Mulesoft substitui pelo timestamp real
+        Funcionalidad:     'SendCampaign',
+        TipoFuncionalidad: 'sfmc_whatsapp',
+        IdPeticion:        '{{UUID}}',       // Mulesoft gera UUID real
+        CodSistema:        'BLIP'
+      },
+      Body: {
+        id:     '{{UUID}}',
+        to:     'postmaster@activecampaign.msging.net',
+        method: 'set',
+        uri:    '/campaign/full',
+        type:   'application/vnd.iris.activecampaign.full-campaign+json',
+        resource: {
+          campaign: {
+            name:         recipientToken + '-{{NOW}}',
+            campaignType: 'Individual',
+            MasterState:  '{{MASTER_STATE}}', // Mulesoft substitui pela config
+            flowId:       '{{FLOW_ID}}',      // Mulesoft substitui pela config
+            stateId:      'onboarding',
+            channelType:  'WhatsApp'
+          },
+          audience: {
+            recipient:     recipientToken,
+            messageParams: messageParams
+          },
+          message: {
+            messageTemplate: messageTemplate,
+            channelType:     'WhatsApp'
+          }
+        }
+      }
+    };
 
     if (recipientField) {
       payload['arguments']                     = payload['arguments'] || {};
       payload['arguments'].execute             = payload['arguments'].execute || {};
-      payload['arguments'].execute.inArguments = inArguments;
-      payload['arguments'].messageTemplate     = messageTemplate;
-      payload['arguments'].recipient_field     = recipientField;
+      payload['arguments'].execute.inArguments = [
+        { blipPayload: JSON.stringify(blipPayload) }
+      ];
+
+      // Salva também para reload do wizard
+      payload['arguments'].messageTemplate = messageTemplate;
+      payload['arguments'].recipient_field = recipientField;
 
       payload['metaData']              = payload['metaData'] || {};
       payload['metaData'].isConfigured = true;
 
-      console.log('[SAVE] inArguments:', JSON.stringify(inArguments));
+      console.log('[SAVE] blipPayload:', JSON.stringify(blipPayload, null, 2));
       console.log('[SAVE] payload completo:', JSON.stringify(payload));
 
       connection.trigger('updateActivity', payload);
